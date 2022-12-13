@@ -1,0 +1,83 @@
+#pragma once
+
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <sstream>
+#include <chrono>
+#include <functional>
+#include <map>
+#include <cmath>
+//#include <chrono>
+
+enum symbol {
+	NUL = 0,
+	NUM,//number
+	OP,//operator
+	COP,//complex operator
+	STR//string (includes for example x and so on)
+};
+
+struct token {
+	token():val(), symb(NUL) {}
+	token(const std::string& _val, const symbol _symb):val(_val), symb(_symb) {}
+	std::string val;
+	symbol symb;
+	bool operator==(const token& a) const { return a.symb == symb && a.val == val; }
+	bool operator!=(const token& a) const { return !(a.symb == symb && a.val == val); }
+	friend std::ostream& operator<<(std::ostream& os, const token& tk);
+};
+inline std::ostream& operator<<(std::ostream& os, const token& tk) {
+	os << tk.val;
+	//os << tk.val <<": " << tk.symb;
+	return os;
+}
+
+class Node {
+public:
+	Node() = default;
+	Node(const token& _val):value(_val) {}
+	token value;
+	Node* left = nullptr;
+	Node* right = nullptr;
+	void print(const std::string& prefix, const bool isLeft) const;
+};
+class Tree {
+public:
+	Tree() { head = new Node(); }
+	void print() const;
+	Node* head;
+};
+
+class Expression {
+public:
+	Expression() = default;
+	std::function<float()> expr;
+	std::map<std::string, float> func_args;
+	float x = 0.0f;//cache x, to call it and assign faster
+	//std::function<float()> calc_nodes(const Node* node);
+	float calc_nodes(const Node* node);
+	void calc_func(const Tree* tree);
+};
+
+class ExprStrParser{
+private:
+	Tree tree;
+	Expression expression{};
+	//Node* calcNode(const std::vector<token>::iterator& it_begin, const std::vector<token>::iterator& it_end);
+	Node* rcalcNode(const std::vector<token>::reverse_iterator& rit_begin, const std::vector<token>::reverse_iterator& rit_end);
+	void buildTokenTree();
+	std::vector<token> tokens;
+	void tokenize(std::string& str);
+
+	//void optizmieTree();//maybe could later create this (to for example calculate multiple multiplications at one, first time) (or maybe add this method to expr tree?)
+public:
+	void parse(std::string& str);
+	void set_func();
+	void set_args(const std::map<std::string, float>& args);
+	float calculate()const;
+	float calculate(const float x);
+	float calculate(const std::map<std::string, float>& args);
+	float calculate(const float x, const std::map<std::string, float>& args);
+};
