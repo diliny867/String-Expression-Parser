@@ -25,7 +25,7 @@ void Tree::print() const {
 
 
 void Expression::calc_func(const Tree* tree) {
-	expr = [=]() {return calc_nodes(tree->head); };//this is wrong how can i optimize it? TODO: optimize it
+	expr = [=]() {return calc_nodes(tree->head); };//this is wrong how can i optimize it (make it as already calculated function)? TODO: optimize it
 }
 
 /*
@@ -181,7 +181,7 @@ float Expression::calc_nodes(const Node* node) {//the same but returns not funcs
 }
 
 
-void ExprStrParser::tokenize(std::string& str){//TODO: add COP
+void ExprStrParser::tokenize(std::string& str){// !TODO: parse things like xlog to x and log, not x l o g
 	std::stringstream num_ss;
 	std::stringstream str_ss;
 	float num;
@@ -197,7 +197,6 @@ void ExprStrParser::tokenize(std::string& str){//TODO: add COP
 		//	continue;
 		//}`
 
-		//if (isdigit(*it) || ((*it == '.')&&lastSymbol==NUM)) {
 		if (isdigit(*it) || *it == '.') {
 			
 			num_ss<<*it;
@@ -208,12 +207,17 @@ void ExprStrParser::tokenize(std::string& str){//TODO: add COP
 						tokens.push_back(token("*", OP));
 					}
 				}
-				if (str_ == "log" || str_ == "sin" || str_ == "cos" || str_ == "tan" || str_ == "sqrt") {
+				if (cop_set.count(str_)) {
 					tokens.push_back(token(str_, COP));
 				} else if (math_consts.count(str_)) {
 					tokens.push_back(token(math_consts.at(str_), NUM));
 				} else {
-					tokens.push_back(token(str_, STR));
+					for (const auto& ch : str_) { //converts abc to a*b*c
+						tokens.push_back(token(std::string(1, ch), STR));
+						tokens.push_back(token("*", OP));
+					}
+					tokens.pop_back();
+					//tokens.push_back(token(str_, STR));
 				}
 				str_ss = std::stringstream();
 			}
@@ -236,12 +240,18 @@ void ExprStrParser::tokenize(std::string& str){//TODO: add COP
 							tokens.push_back(token("*", OP));
 						}
 					}
-					if (str_ == "log" || str_ == "sin" || str_ == "cos" || str_ == "tan" || str_ == "sqrt") {
+					if (cop_set.count(str_)) {
 						tokens.push_back(token(str_, COP));
 					} else if (math_consts.count(str_)) {
 						tokens.push_back(token(math_consts.at(str_), NUM));
 					} else {
-						tokens.push_back(token(str_, STR));
+						std::cout<<str_<<std::endl;
+						for (const auto& ch : str_) { //converts abc to a*b*c
+							tokens.push_back(token(std::string(1, ch), STR));
+							tokens.push_back(token("*", OP));
+						}
+						tokens.pop_back();
+						//tokens.push_back(token(str_, STR));
 					}
 					str_ss = std::stringstream();
 				}
@@ -273,12 +283,12 @@ void ExprStrParser::tokenize(std::string& str){//TODO: add COP
 			}
 		}
 	}
-	if (!num_ss.str().empty()) {
+	if (!num_ss.str().empty()) {//last element
 		num_ss>>num;
 		tokens.push_back(token(std::to_string(num), NUM));
 		num_ss = std::stringstream();
 	}
-	if (!str_ss.str().empty()) {
+	if (!str_ss.str().empty()) {//last element
 		str_ss>>str_;
 		if (tokens.empty()) {
 			tokens.push_back(token(str_, STR));
@@ -289,7 +299,12 @@ void ExprStrParser::tokenize(std::string& str){//TODO: add COP
 			if (math_consts.count(str_)) {
 				tokens.push_back(token(math_consts.at(str_), NUM));
 			} else {
-				tokens.push_back(token(str_, STR));
+				for (const auto& ch : str_) { //converts abc to a*b*c
+					tokens.push_back(token(std::string(1, ch), STR));
+					tokens.push_back(token("*", OP));
+				}
+				tokens.pop_back();
+				//tokens.push_back(token(str_, STR));
 			}
 		}
 	}
@@ -403,84 +418,10 @@ Node* ExprStrParser::rcalcNode(const std::vector<token>::reverse_iterator& rit_b
 
 	return nullptr;
 }
-/*
-Node* ExprStrParser::calcNode(const std::vector<token>::iterator& it_begin, const std::vector<token>::iterator& it_end) {//incorrect
-	//std::cout<<std::endl;
-	if(it_end-it_begin == 1) {
-		//std::cout<<*it_begin<<std::endl;
-		return new Node(*it_begin);
-	}
-	Node* curr_node = new Node();
-	int level = 0;
-	for (auto it = it_begin; it<it_end; ++it) {
-		//std::cout<<*it<<std::endl;
-		switch ((*it).symb) {
-		case COP:
-			level = 1;
-			curr_node = new Node(*it);
-			for (auto br_it = it+2; br_it<it_end; ++br_it) {
-				if ((*br_it).symb == OP) {
-					if ((*br_it).val == "(") {
-						++level;
-					}
-					if ((*br_it).val == ")") {
-						--level;
-					}
-					if (level == 0) {
-						curr_node = new Node(*it);
-						if (br_it<it_end) {
-							curr_node->left = calcNode(it+2, br_it);
-							curr_node->right = calcNode(br_it+1, it_end);
-							return curr_node;
-						} else {
-							curr_node->left = calcNode(it+2, br_it);
-						}
-						return curr_node;
-						//return calcNode(it, br_it-1);
-					}
-					
-				}
-			}
-			return curr_node;
-		case OP:
-			if((*it).val == "(") {
-				level = 1;
-				for(auto br_it = it+1;br_it<it_end;++br_it) {
-					if((*br_it).symb == OP) {
-						if((*br_it).val == "(") {
-							++level;
-						}
-						if ((*br_it).val == ")") {
-							--level;
-						}
-						if(level == 0) {
-							curr_node = new Node(token("$", OP));//symbol means side branch is created
-							//if(br_it<it_end) {//oh yes, how can it be equal to end
-								curr_node->left = calcNode(it+1, br_it);
-								curr_node->right = calcNode(br_it+1, it_end);
-								return curr_node;
-							//} else {
-							//	return calcNode(it+1, br_it);
-							//}
-						}
-					}
-				}
-			} else {
-				curr_node = new Node(*it);
-				//if (it == it_begin && (*it).val=="-") {//ot not leave left of token it tree as nullptr
-				//	curr_node->left = new Node(token(std::to_string(0.0f), NUM));
-				//} else {
-					curr_node->left = calcNode(it_begin, it);
-					//if(it == it_begin && (*it).val=="-") { curr_node->left = new Node(token("0", NUM)); }
-				//}
-				curr_node->right = calcNode(it+1, it_end);
-				return curr_node;
-			}
-		}
-	}
-	return nullptr;
+
+void ExprStrParser::set_func() {
+	expression.calc_func(&tree);
 }
-*/
 
 void ExprStrParser::parse(std::string& str){
 	tokenize(str);
@@ -494,10 +435,14 @@ void ExprStrParser::parse(std::string& str){
 	//tree.print();
 }
 
-void ExprStrParser::set_func() {
-	expression.calc_func(&tree);
+void ExprStrParser::set_args(const float x) {
+	expression.x = x;
 }
 void ExprStrParser::set_args(const std::map<std::string, float>& args) {
+	expression.func_args = args;
+}
+void ExprStrParser::set_args(const float x, const std::map<std::string, float>& args) {
+	expression.x = x;
 	expression.func_args = args;
 }
 float ExprStrParser::calculate() const {
@@ -505,7 +450,6 @@ float ExprStrParser::calculate() const {
 }
 float ExprStrParser::calculate(const float x) {
 	expression.x = x;
-	//expression.func_args["x"] = x;
 	return expression.expr();
 }
 float ExprStrParser::calculate(const std::map<std::string, float>& args) {

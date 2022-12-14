@@ -5,9 +5,9 @@
 #include <vector>
 #include <algorithm>
 #include <sstream>
-#include <chrono>
 #include <functional>
 #include <map>
+#include <set>
 #include <cmath>
 //#include <chrono>
 
@@ -63,6 +63,7 @@ public:
 
 class ExprStrParser{
 private:
+	static inline std::set<std::string> cop_set{"log", "sin", "cos", "tan", "sqrt"};
 	Tree tree;
 	Expression expression{};
 	//Node* calcNode(const std::vector<token>::iterator& it_begin, const std::vector<token>::iterator& it_end);
@@ -70,12 +71,13 @@ private:
 	void buildTokenTree();
 	std::vector<token> tokens;
 	void tokenize(std::string& str);
-
+	void set_func();
 	//void optizmieTree();//maybe could later create this (to for example calculate multiple multiplications at one, first time) (or maybe add this method to expr tree?)
 public:
 	void parse(std::string& str);
-	void set_func();
+	void set_args(const float x);
 	void set_args(const std::map<std::string, float>& args);
+	void set_args(const float x, const std::map<std::string, float>& args);
 	float calculate()const;
 	float calculate(const float x);
 	float calculate(const std::map<std::string, float>& args);
