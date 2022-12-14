@@ -26,7 +26,7 @@ void Tree::print() const {
 
 
 void Expression::calc_func(const Tree* tree) {
-	expr = [=]() {return calc_nodes(tree->head); };//this is wrong how can i optimize it (make it as already calculated function)? TODO: optimize it
+	expr = calc_nodes(tree->head);
 }
 
 /*
@@ -78,126 +78,75 @@ std::function<float()>* Expression::calc_nodes(const Node* node) {
 	return {};
 }
 */
-/*
-std::function<float()> Expression::calc_nodes(const Node* node) {//the same but returns not func pointers, but funcs
+std::function<float()> Expression::calc_nodes(const Node* node) {
 	const token curr_token = node->value;
 
 	switch (curr_token.symb) {
 	case NUM://NUM and STR cover the case when both left and right nodes are nullptr
-		//return new std::function<float()>([=]() {return std::stof(curr_token.val); });
-		return[=]() {return std::stof(curr_token.val); };
+		return [=]() {return std::stof(curr_token.val); };
 	case STR:
-		if(curr_token.val == "x"){
-			//return new std::function<float()>([=]() {return x; });
+		if (curr_token.val == "x") {
 			return[=]() {return x; };
 		} else {
-			//return new std::function<float()>([=]() {return func_args[curr_token.val]; });
 			return [=]() {return func_args[curr_token.val]; };
 		}
 	case OP:
-		if (node->left == nullptr) {
-			//return new std::function<float()>([=]() {return (*calc_nodes(node->right))(); });
-			return [=]() {return calc_nodes(node->right)(); };
-		}
-		if (curr_token.val == "+") {
-			//return new std::function<float()>([=]() {return (*calc_nodes(node->left))()+(*calc_nodes(node->right))(); });
-			return [=]() {return calc_nodes(node->left)()+calc_nodes(node->right)(); };
-		}
-		if (curr_token.val == "-") {
-			//return new std::function<float()>([=]() {return (*calc_nodes(node->left))()-(*calc_nodes(node->right))(); });
-			return [=]() {return calc_nodes(node->left)()-calc_nodes(node->right)(); };
-		}
-		if (curr_token.val == "*") {
-			//return new std::function<float()>([=]() {return (*calc_nodes(node->left))()*(*calc_nodes(node->right))(); });
-			return [=]() {return calc_nodes(node->left)()*(calc_nodes(node->right))(); };
-		}
-		if (curr_token.val == "/") {
-			//return new std::function<float()>([=]() {return (*calc_nodes(node->left))()/(*calc_nodes(node->right))(); });
-			return [=]() {return calc_nodes(node->left)()/calc_nodes(node->right)(); };
-		}
-		break;
-	case COP:
-		//TODO: this
-		break;
-	case NUL:
-		std::cout<<"NUL"<<std::endl;
-		break;
-	}
-
-	return {};
-}
-*/
-float Expression::calc_nodes(const Node* node) {//the same but returns not funcs or pointers, but floats
-	const token curr_token = node->value;
-
-	switch (curr_token.symb) {
-	case NUM://NUM and STR cover the case when both left and right nodes are nullptr
-		return std::stof(curr_token.val);
-	case STR:
-		if (str_compare(curr_token.val.c_str(), "x")) {
-			return x;
-		} else {
-			return func_args.at(curr_token.val);
-		}
-	case OP:
+	{
+		const float left = calc_nodes(node->left)();
+		const float right = calc_nodes(node->right)();
 		if (str_compare(curr_token.val.c_str(), "+")) {
-			return calc_nodes(node->left)+calc_nodes(node->right);
+			return [=]() {return left+right; };
 		}
 		if (str_compare(curr_token.val.c_str(), "-")) {
-			return calc_nodes(node->left)-calc_nodes(node->right);
+			return [=]() {return left-right; };
 		}
 		if (str_compare(curr_token.val.c_str(), "*")) {
-			return calc_nodes(node->left)*(calc_nodes(node->right));
+			return [=]() {return left*right; };
 		}
 		if (str_compare(curr_token.val.c_str(), "/")) {
-			return calc_nodes(node->left)/calc_nodes(node->right);
+			return [=]() {return left/right; };
 		}
-		if(str_compare(curr_token.val.c_str(), "^")) {
-			return pow(calc_nodes(node->left), calc_nodes(node->right));
+		if (str_compare(curr_token.val.c_str(), "^")) {
+			return [=]() {return pow(left, right); };
 		}
+	}
 		break;
 	case COP:
-		if(str_compare(curr_token.val.c_str(), "log")) {
-			return std::log(calc_nodes(node->right));
+	{
+		const float right = calc_nodes(node->right)();
+		if (str_compare(curr_token.val.c_str(), "log")) {
+			return [=]() {return std::log(right); };
 		}
-		if(str_compare(curr_token.val.c_str(), "sin")) {
-			return sin(calc_nodes(node->right));
+		if (str_compare(curr_token.val.c_str(), "sin")) {
+			return [=]() {return sin(right); };
 		}
-		if(str_compare(curr_token.val.c_str(), "cos")) {
-			return cos(calc_nodes(node->right));
+		if (str_compare(curr_token.val.c_str(), "cos")) {
+			return [=]() {return cos(right); };
 		}
-		if(str_compare(curr_token.val.c_str(), "tan")) {
-			return tan(calc_nodes(node->right));
+		if (str_compare(curr_token.val.c_str(), "tan")) {
+			return [=]() {return tan(right); };
 		}
-		if(str_compare(curr_token.val.c_str(), "sqrt")) {
-			return sqrt(calc_nodes(node->right));
+		if (str_compare(curr_token.val.c_str(), "sqrt")) {
+			return [=]() {return sqrt(right); };
 		}
+	}
 		break;
 	case NUL:
-		std::cout<<"NUL"<<std::endl;
-		break;
+		return []() {return 0.0f; };
 	}
-
-	return {};
+	return []() {return 0.0f; };
 }
 
 
 void ExprStrParser::tokenize(std::string& str){// !TODO: parse things like xlog to x and log, not x l o g
+	tokens.reserve(str.size());
 	std::stringstream num_ss;
 	std::stringstream str_ss;
-	float num;
+	//float num;
 	std::string str_;
 
 	for (auto it = str.begin(); it != str.end(); ++it) {
 		if (*it==' ') { continue; }
-
-		//if((lastSymbol != NUM) && *it == '-'){
-		//	tokens.push_back(0.0f);
-		//	tokens.push_back('-');
-		//	lastSymbol = OP;
-		//	continue;
-		//}`
-
 		if (isdigit(*it) || *it == '.') {
 			
 			num_ss<<*it;
@@ -224,14 +173,10 @@ void ExprStrParser::tokenize(std::string& str){// !TODO: parse things like xlog 
 			}
 		} else {
 			if (!num_ss.str().empty()) {
-				num_ss>>num;
-				tokens.push_back(token(std::to_string(num),NUM));
+				//num_ss>>num;
+				//tokens.push_back(token(std::to_string(num), NUM));
+				tokens.push_back(token(num_ss.str(),NUM));
 				num_ss = std::stringstream();
-				//if (tokens[tokens.size()-2].symb != OP || tokens[tokens.size()-2].val == ")") {
-				//	token _token = tokens.back();
-				//	tokens.back() = token("*", OP);
-				//	tokens.push_back(_token);
-				//}
 			}
 			if(ispunct(*it)){
 				if (!str_ss.str().empty()) {
@@ -284,8 +229,9 @@ void ExprStrParser::tokenize(std::string& str){// !TODO: parse things like xlog 
 		}
 	}
 	if (!num_ss.str().empty()) {//last element
-		num_ss>>num;
-		tokens.push_back(token(std::to_string(num), NUM));
+		//num_ss>>num;
+		//tokens.push_back(token(std::to_string(num), NUM));
+		tokens.push_back(token(num_ss.str(), NUM));
 		num_ss = std::stringstream();
 	}
 	if (!str_ss.str().empty()) {//last element

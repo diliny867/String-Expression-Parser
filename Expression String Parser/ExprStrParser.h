@@ -15,8 +15,8 @@
 enum symbol {
 	NUL = 0,
 	NUM,//number
-	OP,//operator
-	COP,//complex operator
+	OP,//operator (+, -, *...)
+	COP,//complex operator (like log or sin)
 	STR//string (includes for example x and so on)
 };
 
@@ -57,8 +57,8 @@ public:
 	std::function<float()> expr;
 	std::map<std::string, float> func_args;
 	float x = 0.0f;//cache x, to call it and assign faster
-	//std::function<float()> calc_nodes(const Node* node);
-	float calc_nodes(const Node* node);
+	std::function<float()> calc_nodes(const Node* node);
+	//float calc_nodes(const Node* node);
 	void calc_func(const Tree* tree);
 };
 
