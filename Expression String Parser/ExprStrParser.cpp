@@ -92,8 +92,8 @@ std::function<float()> Expression::calc_nodes(const Node* node) {
 		}
 	case OP:
 	{
-		const float left = calc_nodes(node->left)();
-		const float right = calc_nodes(node->right)();
+		const auto left = calc_nodes(node->left)();
+		const auto right = calc_nodes(node->right)();
 		if (str_compare(curr_token.val.c_str(), "+")) {
 			return [=]() {return left+right; };
 		}
@@ -113,7 +113,7 @@ std::function<float()> Expression::calc_nodes(const Node* node) {
 		break;
 	case COP:
 	{
-		const float right = calc_nodes(node->right)();
+		const auto right = calc_nodes(node->right)();
 		if (str_compare(curr_token.val.c_str(), "log")) {
 			return [=]() {return std::log(right); };
 		}
@@ -383,27 +383,30 @@ void ExprStrParser::parse(std::string& str){
 
 void ExprStrParser::set_args(const float x) {
 	expression.x = x;
+	set_func();
 }
 void ExprStrParser::set_args(const std::map<std::string, float>& args) {
 	expression.func_args = args;
+	set_func();
 }
 void ExprStrParser::set_args(const float x, const std::map<std::string, float>& args) {
 	expression.x = x;
 	expression.func_args = args;
+	set_func();
 }
 float ExprStrParser::calculate() const {
 	return expression.expr();
 }
-float ExprStrParser::calculate(const float x) {
-	expression.x = x;
-	return expression.expr();
-}
-float ExprStrParser::calculate(const std::map<std::string, float>& args) {
-	expression.func_args = args;
-	return expression.expr();
-}
-float ExprStrParser::calculate(const float x, const std::map<std::string, float>& args) {
-	expression.x = x;
-	expression.func_args = args;
-	return expression.expr();
-}
+//float ExprStrParser::calculate(const float x) {
+//	expression.x = x;
+//	return expression.expr();
+//}
+//float ExprStrParser::calculate(const std::map<std::string, float>& args) {
+//	expression.func_args = args;
+//	return expression.expr();
+//}
+//float ExprStrParser::calculate(const float x, const std::map<std::string, float>& args) {
+//	expression.x = x;
+//	expression.func_args = args;
+//	return expression.expr();
+//}

@@ -20,11 +20,12 @@ int main() {
 	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 	std::cout << "Time taken to parse and set func: "<< static_cast<float>(duration.count())/1000.0f << " milliseconds" << std::endl;
 
-	std::cout << "Answer: " << std::fixed << std::setprecision(10) << parser.calculate(3.0f) << std::defaultfloat << std::endl;
+	parser.set_args(3.0f);
+	std::cout << "Answer: " << std::fixed << std::setprecision(10) << parser.calculate() << std::defaultfloat << std::endl;
 	constexpr std::size_t calc_count = 10000;
 	start = std::chrono::high_resolution_clock::now();
 	for (std::size_t i = 0; i<calc_count; i++) {
-		parser.calculate(3.0f);
+		parser.calculate();
 	}
 	stop = std::chrono::high_resolution_clock::now();
 	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
