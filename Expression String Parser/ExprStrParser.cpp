@@ -2,8 +2,9 @@
 
 #define pi_str "3.14159265358979323846"
 #define e_str  "2.71828182845904523536"
-
 const std::map<std::string, std::string> math_consts {{"pi", pi_str}, {"e", e_str}};
+
+#define str_compare(s1, s2) (std::strcmp(s1, s2) == 0)
 
 void Node::print(const std::string& prefix, const bool isLeft) const {
 	std::cout << prefix;
@@ -133,42 +134,42 @@ float Expression::calc_nodes(const Node* node) {//the same but returns not funcs
 	case NUM://NUM and STR cover the case when both left and right nodes are nullptr
 		return std::stof(curr_token.val);
 	case STR:
-		if (curr_token.val == "x") {
+		if (str_compare(curr_token.val.c_str(), "x")) {
 			return x;
 		} else {
 			return func_args.at(curr_token.val);
 		}
 	case OP:
-		if (curr_token.val == "+") {
+		if (str_compare(curr_token.val.c_str(), "+")) {
 			return calc_nodes(node->left)+calc_nodes(node->right);
 		}
-		if (curr_token.val == "-") {
+		if (str_compare(curr_token.val.c_str(), "-")) {
 			return calc_nodes(node->left)-calc_nodes(node->right);
 		}
-		if (curr_token.val == "*") {
+		if (str_compare(curr_token.val.c_str(), "*")) {
 			return calc_nodes(node->left)*(calc_nodes(node->right));
 		}
-		if (curr_token.val == "/") {
+		if (str_compare(curr_token.val.c_str(), "/")) {
 			return calc_nodes(node->left)/calc_nodes(node->right);
 		}
-		if(curr_token.val == "^") {
+		if(str_compare(curr_token.val.c_str(), "^")) {
 			return pow(calc_nodes(node->left), calc_nodes(node->right));
 		}
 		break;
 	case COP:
-		if(curr_token.val == "log") {
+		if(str_compare(curr_token.val.c_str(), "log")) {
 			return std::log(calc_nodes(node->right));
 		}
-		if(curr_token.val == "sin") {
+		if(str_compare(curr_token.val.c_str(), "sin")) {
 			return sin(calc_nodes(node->right));
 		}
-		if(curr_token.val == "cos") {
+		if(str_compare(curr_token.val.c_str(), "cos")) {
 			return cos(calc_nodes(node->right));
 		}
-		if(curr_token.val == "tan") {
+		if(str_compare(curr_token.val.c_str(), "tan")) {
 			return tan(calc_nodes(node->right));
 		}
-		if(curr_token.val == "sqrt") {
+		if(str_compare(curr_token.val.c_str(), "sqrt")) {
 			return sqrt(calc_nodes(node->right));
 		}
 		break;
@@ -203,7 +204,7 @@ void ExprStrParser::tokenize(std::string& str){// !TODO: parse things like xlog 
 			if (!str_ss.str().empty()) {
 				str_ss>>str_;
 				if (!tokens.empty()) {
-					if (tokens.back().symb == NUM || tokens.back().symb == STR || tokens.back().val == ")") {
+					if (tokens.back().symb == NUM || tokens.back().symb == STR || str_compare(tokens.back().val.c_str(), ")")) {
 						tokens.push_back(token("*", OP));
 					}
 				}
@@ -236,7 +237,7 @@ void ExprStrParser::tokenize(std::string& str){// !TODO: parse things like xlog 
 				if (!str_ss.str().empty()) {
 					str_ss>>str_;
 					if(!tokens.empty()) {
-						if (tokens.back().symb == NUM || tokens.back().symb == STR || tokens.back().val == ")") {
+						if (tokens.back().symb == NUM || tokens.back().symb == STR || str_compare(tokens.back().val.c_str(), ")")) {
 							tokens.push_back(token("*", OP));
 						}
 					}
@@ -245,7 +246,6 @@ void ExprStrParser::tokenize(std::string& str){// !TODO: parse things like xlog 
 					} else if (math_consts.count(str_)) {
 						tokens.push_back(token(math_consts.at(str_), NUM));
 					} else {
-						std::cout<<str_<<std::endl;
 						for (const auto& ch : str_) { //converts abc to a*b*c
 							tokens.push_back(token(std::string(1, ch), STR));
 							tokens.push_back(token("*", OP));
@@ -256,13 +256,13 @@ void ExprStrParser::tokenize(std::string& str){// !TODO: parse things like xlog 
 					str_ss = std::stringstream();
 				}
 				if (*it == '-') {
-					if(tokens.empty() || tokens.back().val == "(") {
+					if(tokens.empty() || str_compare(tokens.back().val.c_str(), "(")) {
 						tokens.push_back(token("0", NUM));
 					}
 				}
 				if (*it == '(') {
 					if (!tokens.empty()) {
-						if (tokens.back().symb == NUM || tokens.back().symb == STR || tokens.back().val == ")") {
+						if (tokens.back().symb == NUM || tokens.back().symb == STR || str_compare(tokens.back().val.c_str(), ")")) {
 							tokens.push_back(token("*", OP));
 						}
 					}
@@ -273,7 +273,7 @@ void ExprStrParser::tokenize(std::string& str){// !TODO: parse things like xlog 
 				if(math_consts.count(str_ss.str())) {
 					str_ss>>str_;
 					if (!tokens.empty()) {
-						if (tokens.back().symb == NUM || tokens.back().symb == STR || tokens.back().val == ")") {
+						if (tokens.back().symb == NUM || tokens.back().symb == STR || str_compare(tokens.back().val.c_str(), ")")) {
 							tokens.push_back(token("*", OP));
 						}
 					}
@@ -293,7 +293,7 @@ void ExprStrParser::tokenize(std::string& str){// !TODO: parse things like xlog 
 		if (tokens.empty()) {
 			tokens.push_back(token(str_, STR));
 		} else {
-			if (tokens.back().symb == NUM || tokens.back().symb == STR || tokens.back().val == ")") {
+			if (tokens.back().symb == NUM || tokens.back().symb == STR || str_compare(tokens.back().val.c_str(), ")")) {
 				tokens.push_back(token("*", OP));
 			}
 			if (math_consts.count(str_)) {
@@ -327,7 +327,7 @@ Node* ExprStrParser::rcalcNode(const std::vector<token>::reverse_iterator& rit_b
 	//}
 	//std::cout << std::endl;
 
-	if (rit_begin->val == ")" && (rit_end-1)->val == "(") {//strips expression of side brackets
+	if (str_compare(rit_begin->val.c_str(), ")") && str_compare((rit_end-1)->val.c_str(), "(")) {//strips expression of side brackets
 		int level = 0;
 		for (auto rit = rit_begin+1; rit<rit_end-1; ++rit) {//temporary solution(its slow and needs to be checked in next two loops)
 			if (rit->val == "(") {
@@ -376,16 +376,16 @@ Node* ExprStrParser::rcalcNode(const std::vector<token>::reverse_iterator& rit_b
 	int level = 0;
 	for (auto rit = rit_begin; rit<rit_end; ++rit) {
 		if (rit->symb == OP) {
-			if (rit->val == ")") {
+			if (str_compare(rit->val.c_str(), ")")) {
 				++level;
 				continue;
 			}
-			if (rit->val == "(") {
+			if (str_compare(rit->val.c_str(), "(")) {
 				--level;
 				continue;
 			}
 			if (level == 0) {
-				if (rit->val == "-" || rit->val == "+") {
+				if (str_compare(rit->val.c_str(), "-") || str_compare(rit->val.c_str(), "+")) {
 					curr_node = new Node(token(rit->val, OP));
 					curr_node->left = rcalcNode(rit+1, rit_end);
 					curr_node->right = rcalcNode(rit_begin, rit);
@@ -397,11 +397,11 @@ Node* ExprStrParser::rcalcNode(const std::vector<token>::reverse_iterator& rit_b
 
 	for (auto rit = rit_begin; rit<rit_end; ++rit) {
 		if (rit->symb == OP) {
-			if (rit->val == ")") {
+			if (str_compare(rit->val.c_str(), ")")) {
 				++level;
 				continue;
 			}
-			if (rit->val == "(") {
+			if (str_compare(rit->val.c_str(), "(")) {
 				--level;
 				continue;
 			}
