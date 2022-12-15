@@ -92,42 +92,42 @@ std::function<float()> Expression::calc_nodes(const Node* node) {
 		}
 	case OP:
 	{
-		const auto left = calc_nodes(node->left)();
-		const auto right = calc_nodes(node->right)();
+		const auto left = calc_nodes(node->left);
+		const auto right = calc_nodes(node->right);
 		if (str_compare(curr_token.val.c_str(), "+")) {
-			return [=]() {return left+right; };
+			return [=]() {return left()+right(); };
 		}
 		if (str_compare(curr_token.val.c_str(), "-")) {
-			return [=]() {return left-right; };
+			return [=]() {return left()-right(); };
 		}
 		if (str_compare(curr_token.val.c_str(), "*")) {
-			return [=]() {return left*right; };
+			return [=]() {return left()*right(); };
 		}
 		if (str_compare(curr_token.val.c_str(), "/")) {
-			return [=]() {return left/right; };
+			return [=]() {return left()/right(); };
 		}
 		if (str_compare(curr_token.val.c_str(), "^")) {
-			return [=]() {return pow(left, right); };
+			return [=]() {return pow(left(), right()); };
 		}
 	}
 		break;
 	case COP:
 	{
-		const auto right = calc_nodes(node->right)();
+		const auto right = calc_nodes(node->right);
 		if (str_compare(curr_token.val.c_str(), "log")) {
-			return [=]() {return std::log(right); };
+			return [=]() {return std::log(right()); };
 		}
 		if (str_compare(curr_token.val.c_str(), "sin")) {
-			return [=]() {return sin(right); };
+			return [=]() {return sin(right()); };
 		}
 		if (str_compare(curr_token.val.c_str(), "cos")) {
-			return [=]() {return cos(right); };
+			return [=]() {return cos(right()); };
 		}
 		if (str_compare(curr_token.val.c_str(), "tan")) {
-			return [=]() {return tan(right); };
+			return [=]() {return tan(right()); };
 		}
 		if (str_compare(curr_token.val.c_str(), "sqrt")) {
-			return [=]() {return sqrt(right); };
+			return [=]() {return sqrt(right()); };
 		}
 	}
 		break;
@@ -383,30 +383,27 @@ void ExprStrParser::parse(std::string& str){
 
 void ExprStrParser::set_args(const float x) {
 	expression.x = x;
-	set_func();
 }
 void ExprStrParser::set_args(const std::map<std::string, float>& args) {
 	expression.func_args = args;
-	set_func();
 }
 void ExprStrParser::set_args(const float x, const std::map<std::string, float>& args) {
 	expression.x = x;
 	expression.func_args = args;
-	set_func();
 }
 float ExprStrParser::calculate() const {
 	return expression.expr();
 }
-//float ExprStrParser::calculate(const float x) {
-//	expression.x = x;
-//	return expression.expr();
-//}
-//float ExprStrParser::calculate(const std::map<std::string, float>& args) {
-//	expression.func_args = args;
-//	return expression.expr();
-//}
-//float ExprStrParser::calculate(const float x, const std::map<std::string, float>& args) {
-//	expression.x = x;
-//	expression.func_args = args;
-//	return expression.expr();
-//}
+float ExprStrParser::calculate(const float x) {
+	expression.x = x;
+	return expression.expr();
+}
+float ExprStrParser::calculate(const std::map<std::string, float>& args) {
+	expression.func_args = args;
+	return expression.expr();
+}
+float ExprStrParser::calculate(const float x, const std::map<std::string, float>& args) {
+	expression.x = x;
+	expression.func_args = args;
+	return expression.expr();
+}

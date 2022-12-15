@@ -80,7 +80,7 @@ public:
 	void set_args(const std::map<std::string, float>& args);
 	void set_args(const float x, const std::map<std::string, float>& args);
 	float calculate()const;
-	//float calculate(const float x);
-	//float calculate(const std::map<std::string, float>& args);
-	//float calculate(const float x, const std::map<std::string, float>& args);
+	float calculate(const float x);
+	float calculate(const std::map<std::string, float>& args);
+	float calculate(const float x, const std::map<std::string, float>& args);
 };
