@@ -6,6 +6,7 @@ const std::map<std::string, std::string> math_consts {{"pi", pi_str}, {"e", e_st
 
 #define str_compare(s1, s2) (std::strcmp(s1, s2) == 0)
 
+
 void Node::print(const std::string& prefix, const bool isLeft) const {
 	std::cout << prefix;
 	std::cout << (isLeft ? "|-- " : "L-- ");
@@ -129,6 +130,18 @@ std::function<float()> Expression::calc_nodes(const Node* node) {
 		if (str_compare(curr_token.val.c_str(), "sqrt")) {
 			return [=]() {return sqrt(right()); };
 		}
+		if (str_compare(curr_token.val.c_str(), "ceil")) {
+			return [=]() {return ceil(right()); };
+		}
+		if (str_compare(curr_token.val.c_str(), "floor")) {
+			return [=]() {return floor(right()); };
+		}
+		if (str_compare(curr_token.val.c_str(), "round")) {
+			return [=]() {return round(right()); };
+		}
+		if (str_compare(curr_token.val.c_str(), "abs")) {
+			return [=]() {return abs(right()); };
+		}
 	}
 		break;
 	case NUL:
@@ -137,69 +150,53 @@ std::function<float()> Expression::calc_nodes(const Node* node) {
 	return []() {return 0.0f; };
 }
 
+void ExprStrParser::check_str_sstream(std::stringstream& str_ss) {
+	if (!str_ss.str().empty()) {
+		std::string str_;
+		str_ss>>str_;
+		if (!tokens.empty()) {
+			if (tokens.back().symb == NUM || tokens.back().symb == STR || str_compare(tokens.back().val.c_str(), ")")) {
+				tokens.push_back(token("*", OP));
+			}
+		}
+		if (cop_set.count(str_)) {
+			tokens.push_back(token(str_, COP));
+		} else if (math_consts.count(str_)) {
+			tokens.push_back(token(math_consts.at(str_), NUM));
+		} else {
+			for (const auto& ch : str_) { //converts abc to a*b*c
+				tokens.push_back(token(std::string(1, ch), STR));
+				tokens.push_back(token("*", OP));
+			}
+			tokens.pop_back();
+			//tokens.push_back(token(str_, STR));
+		}
+		str_ss = std::stringstream();
+	}
+}
+void ExprStrParser::check_num_sstream(std::stringstream& num_ss) {
+	if (!num_ss.str().empty()) {
+		//num_ss>>num;
+		//tokens.push_back(token(std::to_string(num), NUM));
+		tokens.push_back(token(num_ss.str(), NUM));
+		num_ss = std::stringstream();
+	}
+}
 
 void ExprStrParser::tokenize(std::string& str){// !TODO: parse things like xlog to x and log, not x l o g
 	tokens.reserve(str.size());
 	std::stringstream num_ss;
 	std::stringstream str_ss;
-	//float num;
-	std::string str_;
 
 	for (auto it = str.begin(); it != str.end(); ++it) {
 		if (*it==' ') { continue; }
 		if (isdigit(*it) || *it == '.') {
-			
 			num_ss<<*it;
-			if (!str_ss.str().empty()) {
-				str_ss>>str_;
-				if (!tokens.empty()) {
-					if (tokens.back().symb == NUM || tokens.back().symb == STR || str_compare(tokens.back().val.c_str(), ")")) {
-						tokens.push_back(token("*", OP));
-					}
-				}
-				if (cop_set.count(str_)) {
-					tokens.push_back(token(str_, COP));
-				} else if (math_consts.count(str_)) {
-					tokens.push_back(token(math_consts.at(str_), NUM));
-				} else {
-					for (const auto& ch : str_) { //converts abc to a*b*c
-						tokens.push_back(token(std::string(1, ch), STR));
-						tokens.push_back(token("*", OP));
-					}
-					tokens.pop_back();
-					//tokens.push_back(token(str_, STR));
-				}
-				str_ss = std::stringstream();
-			}
+			check_str_sstream(str_ss);
 		} else {
-			if (!num_ss.str().empty()) {
-				//num_ss>>num;
-				//tokens.push_back(token(std::to_string(num), NUM));
-				tokens.push_back(token(num_ss.str(),NUM));
-				num_ss = std::stringstream();
-			}
+			check_num_sstream(num_ss);
 			if(ispunct(*it)){
-				if (!str_ss.str().empty()) {
-					str_ss>>str_;
-					if(!tokens.empty()) {
-						if (tokens.back().symb == NUM || tokens.back().symb == STR || str_compare(tokens.back().val.c_str(), ")")) {
-							tokens.push_back(token("*", OP));
-						}
-					}
-					if (cop_set.count(str_)) {
-						tokens.push_back(token(str_, COP));
-					} else if (math_consts.count(str_)) {
-						tokens.push_back(token(math_consts.at(str_), NUM));
-					} else {
-						for (const auto& ch : str_) { //converts abc to a*b*c
-							tokens.push_back(token(std::string(1, ch), STR));
-							tokens.push_back(token("*", OP));
-						}
-						tokens.pop_back();
-						//tokens.push_back(token(str_, STR));
-					}
-					str_ss = std::stringstream();
-				}
+				check_str_sstream(str_ss);
 				if (*it == '-') {
 					if(tokens.empty() || str_compare(tokens.back().val.c_str(), "(")) {
 						tokens.push_back(token("0", NUM));
@@ -216,7 +213,6 @@ void ExprStrParser::tokenize(std::string& str){// !TODO: parse things like xlog 
 			} else {
 				str_ss<<*it;
 				if(math_consts.count(str_ss.str())) {
-					str_ss>>str_;
 					if (!tokens.empty()) {
 						if (tokens.back().symb == NUM || tokens.back().symb == STR || str_compare(tokens.back().val.c_str(), ")")) {
 							tokens.push_back(token("*", OP));
@@ -228,36 +224,11 @@ void ExprStrParser::tokenize(std::string& str){// !TODO: parse things like xlog 
 			}
 		}
 	}
-	if (!num_ss.str().empty()) {//last element
-		//num_ss>>num;
-		//tokens.push_back(token(std::to_string(num), NUM));
-		tokens.push_back(token(num_ss.str(), NUM));
-		num_ss = std::stringstream();
-	}
-	if (!str_ss.str().empty()) {//last element
-		str_ss>>str_;
-		if (tokens.empty()) {
-			tokens.push_back(token(str_, STR));
-		} else {
-			if (tokens.back().symb == NUM || tokens.back().symb == STR || str_compare(tokens.back().val.c_str(), ")")) {
-				tokens.push_back(token("*", OP));
-			}
-			if (math_consts.count(str_)) {
-				tokens.push_back(token(math_consts.at(str_), NUM));
-			} else {
-				for (const auto& ch : str_) { //converts abc to a*b*c
-					tokens.push_back(token(std::string(1, ch), STR));
-					tokens.push_back(token("*", OP));
-				}
-				tokens.pop_back();
-				//tokens.push_back(token(str_, STR));
-			}
-		}
-	}
+	check_num_sstream(num_ss);
+	check_str_sstream(str_ss);
 }
 
 void ExprStrParser::buildTokenTree() {
-	//tree.head = calcNode(tokens.begin(), tokens.end());
 	tree.head = rcalcNode(tokens.rbegin(), tokens.rend());
 }
 
@@ -407,3 +378,69 @@ float ExprStrParser::calculate(const float x, const std::map<std::string, float>
 	expression.func_args = args;
 	return expression.expr();
 }
+
+//using these std::maps with lambdas (in calc_nodes()) is slower, than comparing to strings
+//std::map<std::string, std::function<std::function<float()>(std::function<float()>, std::function<float()>)>> op_set{
+//	{"+",
+//		[](const std::function<float()>& left, const std::function<float()>& right)->std::function<float()> {
+//			return [=]() {
+//				return left()+right();
+//			};
+//		}
+//	}, {"-",
+//		[](const std::function<float()>& left, const std::function<float()>& right)->std::function<float()> {
+//			return [=]() {
+//				return left()-right();
+//			};
+//		}
+//	}, {"*",
+//		[](const std::function<float()>& left, const std::function<float()>& right)->std::function<float()> {
+//			return [=]() {
+//				return left()*right();
+//			};
+//		}
+//	}, {"/",
+//		[](const std::function<float()>& left, const std::function<float()>& right)->std::function<float()> {
+//			return [=]() {
+//				return left()/right();
+//			};
+//		}
+//	}, {"^",
+//		[](const std::function<float()>& left, const std::function<float()>& right)->std::function<float()> {
+//			return [=]() {
+//				return pow(left(), right());
+//			};
+//		}
+//	} };
+//std::map<std::string, std::function<std::function<float()>(std::function<float()>)>> cop_set{
+//	{"log",
+//		[](const std::function<float()>& func)->std::function<float()> {
+//			return [=]() {
+//				return std::log(func());
+//			};
+//		}
+//	}, {"sin",
+//		[](const std::function<float()>& func)->std::function<float()> {
+//			return [=]() {
+//				return sin(func());
+//			};
+//		}
+//	}, {"cos",
+//		[](const std::function<float()>& func)->std::function<float()> {
+//			return [=]() {
+//				return cos(func());
+//			};
+//		}
+//	}, {"tan",
+//		[](const std::function<float()>& func)->std::function<float()> {
+//			return [=]() {
+//				return tan(func());
+//			};
+//		}
+//	}, {"sqrt",
+//		[](const std::function<float()>& func)->std::function<float()> {
+//			return [=]() {
+//				return sqrt(func());
+//			};
+//		}
+//	} };

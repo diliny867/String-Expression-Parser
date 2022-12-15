@@ -64,17 +64,19 @@ public:
 
 class ExprStrParser{
 private:
-	static inline std::set<std::string> cop_set{"log", "sin", "cos", "tan", "sqrt"};
+	static inline std::set<std::string> cop_set{"log", "sin", "cos", "tan", "sqrt", "ceil", "floor", "round", "abs"};
 	Tree tree;
 	Expression expression{};
-	//Node* calcNode(const std::vector<token>::iterator& it_begin, const std::vector<token>::iterator& it_end);
 	Node* rcalcNode(const std::vector<token>::reverse_iterator& rit_begin, const std::vector<token>::reverse_iterator& rit_end);
 	void buildTokenTree();
 	std::vector<token> tokens;
+	void check_str_sstream(std::stringstream& str_ss);
+	void check_num_sstream(std::stringstream& num_ss);
 	void tokenize(std::string& str);
 	void set_func();
 	//void optizmieTree();//maybe could later create this (to for example calculate multiple multiplications at one, first time) (or maybe add this method to expr tree?)
 public:
+	ExprStrParser() = default;
 	void parse(std::string& str);
 	void set_args(const float x);
 	void set_args(const std::map<std::string, float>& args);
