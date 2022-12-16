@@ -1,11 +1,11 @@
 #include <chrono>
 #include <iomanip>  // << std::setprecision(10)
 
-#include "ExprStrParser.h"
+#include "Parser.h"
 
 
 int main() {
-	ExprStrParser parser;
+	ExprStrParser::Parser parser;
 	std::string expr = "-0.17*(25.215x*(-2+20)/(9-1))-log(25)^6";
 
 	//std::map<std::string, float> args{{"x", 2.0f} };
