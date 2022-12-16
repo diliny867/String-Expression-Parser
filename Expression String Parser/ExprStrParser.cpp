@@ -150,7 +150,7 @@ std::function<float()> Expression::calc_nodes(const Node* node) {
 	return []() {return 0.0f; };
 }
 
-void ExprStrParser::check_str_sstream(std::stringstream& str_ss) {
+void ExprStrParser::check_str_sstream(std::stringstream& str_ss) {// !TODO: parse things like xlog to x and log, not x l o g
 	if (!str_ss.str().empty()) {
 		std::string str_;
 		str_ss>>str_;
@@ -176,14 +176,12 @@ void ExprStrParser::check_str_sstream(std::stringstream& str_ss) {
 }
 void ExprStrParser::check_num_sstream(std::stringstream& num_ss) {
 	if (!num_ss.str().empty()) {
-		//num_ss>>num;
-		//tokens.push_back(token(std::to_string(num), NUM));
 		tokens.push_back(token(num_ss.str(), NUM));
 		num_ss = std::stringstream();
 	}
 }
 
-void ExprStrParser::tokenize(std::string& str){// !TODO: parse things like xlog to x and log, not x l o g
+void ExprStrParser::tokenize(std::string& str){
 	tokens.reserve(str.size());
 	std::stringstream num_ss;
 	std::stringstream str_ss;
@@ -221,6 +219,24 @@ void ExprStrParser::tokenize(std::string& str){// !TODO: parse things like xlog 
 					tokens.push_back(token(math_consts.at(str_ss.str()), NUM));
 					str_ss = std::stringstream();
 				}
+				//else {
+					//std::string str_ = str_ss.str();
+					//
+					//for (auto rit = str_.rbegin(); rit<str_.rend(); ++rit) {
+					//	
+					//	if (cop_set.count(std::string(rit.base(), str_.rbegin().base()))) {
+					//		//const token new_cop_token = token(std::string(rit.base(), str_.rbegin().base()), COP);
+					//		for(auto _it = str_.begin(); _it<rit.base(); ++_it) {
+					//			//std::cout<<*_it;
+					//			tokens.push_back(token(std::string(1, *_it), STR));
+					//			tokens.push_back(token("*", OP));
+					//		}
+					//		//tokens.push_back(new_cop_token);
+					//		str_ss = std::stringstream();
+					//		break;
+					//	}
+					//}
+				//}
 			}
 		}
 	}
@@ -229,20 +245,25 @@ void ExprStrParser::tokenize(std::string& str){// !TODO: parse things like xlog 
 }
 
 void ExprStrParser::buildTokenTree() {
-	tree.head = rcalcNode(tokens.rbegin(), tokens.rend());
+	try {
+		tree.head = rcalcNode(tokens.rbegin(), tokens.rend());
+	} catch (error_codes err) {
+		switch (err) {
+		case PARSE_ERROR:
+			tree.head = new Node(token("0", NUM));
+			std::cout<<"ERROR: PARSE ERROR"<<std::endl;
+			break;
+		}
+	}
 }
 
-Node* ExprStrParser::rcalcNode(const std::vector<token>::reverse_iterator& rit_begin, const std::vector<token>::reverse_iterator& rit_end) {//somewhere is a bug with right node creation
-	//std::cout<<std::endl;
+Node* ExprStrParser::rcalcNode(const std::vector<token>::reverse_iterator& rit_begin, const std::vector<token>::reverse_iterator& rit_end) {// !TODO: fix ^
+	if (rit_end-rit_begin <= 0) {
+		throw PARSE_ERROR;
+	}
 	if (rit_end-rit_begin == 1) {//leaf (symb == NUM or STR)
-		//std::cout<<*it_begin<<std::endl;
 		return new Node(*rit_begin);
 	}
-
-	//for (auto rit = rit_begin; rit < rit_end; ++rit) {
-	//	std::cout << rit->val << " ";
-	//}
-	//std::cout << std::endl;
 
 	if (str_compare(rit_begin->val.c_str(), ")") && str_compare((rit_end-1)->val.c_str(), "(")) {//strips expression of side brackets
 		int level = 0;
@@ -323,13 +344,33 @@ Node* ExprStrParser::rcalcNode(const std::vector<token>::reverse_iterator& rit_b
 				continue;
 			}
 			if (level == 0) {
-				//std::cout<<*rit<<std::endl;
+				if(str_compare(rit->val.c_str(), "^")){continue;}
 				curr_node = new Node(*rit);
 				curr_node->left = rcalcNode(rit+1, rit_end);
 				curr_node->right = rcalcNode(rit_begin, rit);
 				return curr_node;
 			}
-	
+		}
+	}
+
+	for (auto rit = rit_begin; rit<rit_end; ++rit) {// ^ needs to be processed separately, because it should affect only the closest tokens
+		if (rit->symb == OP) {
+			if (str_compare(rit->val.c_str(), ")")) {
+				++level;
+				continue;
+			}
+			if (str_compare(rit->val.c_str(), "(")) {
+				--level;
+				continue;
+			}
+			if (level == 0) {
+				if (str_compare(rit->val.c_str(), "^")) {
+					curr_node = new Node(*rit);
+					curr_node->left = rcalcNode(rit+1, rit_end);
+					curr_node->right = rcalcNode(rit_begin, rit);
+					return curr_node;
+				}
+			}
 		}
 	}
 

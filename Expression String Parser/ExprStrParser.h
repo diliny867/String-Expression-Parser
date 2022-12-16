@@ -64,6 +64,9 @@ public:
 
 class ExprStrParser{
 private:
+	enum error_codes {
+		PARSE_ERROR = 0
+	};
 	static inline std::set<std::string> cop_set{"log", "sin", "cos", "tan", "sqrt", "ceil", "floor", "round", "abs"};
 	Tree tree;
 	Expression expression{};
