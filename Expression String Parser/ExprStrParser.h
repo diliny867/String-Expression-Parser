@@ -75,7 +75,7 @@ namespace ExprStrParser {
 		Tree tree;
 		Expression expression{};
 		Node* rcalcNode(const std::vector<token>::reverse_iterator& rit_begin, const std::vector<token>::reverse_iterator& rit_end);
-		void buildTokenTree();
+		bool buildTokenTree();
 		std::vector<token> tokens;
 		void check_str_sstream(std::stringstream& str_ss);
 		void check_num_sstream(std::stringstream& num_ss);

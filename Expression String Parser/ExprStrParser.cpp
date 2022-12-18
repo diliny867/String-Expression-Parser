@@ -31,7 +31,7 @@ const std::map<std::string, std::string> math_consts {{"pi", pi_str}, {"e", e_st
 		try {
 			expr = calc_nodes(tree->head);
 		} catch (error_codes err) {
-			expr = []() {return 0.0f; };
+			expr = []() {return std::nanf(""); };
 		}
 	}
 
@@ -51,6 +51,9 @@ const std::map<std::string, std::string> math_consts {{"pi", pi_str}, {"e", e_st
 		case OP:
 		{
 			const auto left = calc_nodes(node->left);
+			if (str_compare(curr_token.val.c_str(), "!")) {
+				return [=]() {return std::tgamma(left()+1.0f); };
+			}
 			const auto right = calc_nodes(node->right);
 			if (str_compare(curr_token.val.c_str(), "+")) {
 				return [=]() {return left()+right(); };
@@ -201,17 +204,19 @@ const std::map<std::string, std::string> math_consts {{"pi", pi_str}, {"e", e_st
 		check_str_sstream(str_ss);
 	}
 
-	void Parser::buildTokenTree() {
+	bool Parser::buildTokenTree() {
 		try {
 			tree.head = rcalcNode(tokens.rbegin(), tokens.rend());
+			tokens.clear();
+			return true;
 		} catch (error_codes err) {
-			tree.head = new Node(token("0", NUM));
+			tokens.clear();
+			return false;
 			//std::cout<<"ERROR: PARSE ERROR"<<std::endl;
 		}
-		tokens.clear();
 	}
 
-	Node* Parser::rcalcNode(const std::vector<token>::reverse_iterator& rit_begin, const std::vector<token>::reverse_iterator& rit_end) {// !TODO: fix ^
+	Node* Parser::rcalcNode(const std::vector<token>::reverse_iterator& rit_begin, const std::vector<token>::reverse_iterator& rit_end) {
 		if (rit_end-rit_begin <= 0) {
 			throw PARSE_ERROR;
 		}
@@ -287,6 +292,7 @@ const std::map<std::string, std::string> math_consts {{"pi", pi_str}, {"e", e_st
 			}
 		}
 
+		level = 0;
 		for (auto rit = rit_begin; rit<rit_end; ++rit) {
 			if (rit->symb == OP) {
 				if (str_compare(rit->val.c_str(), ")")) {
@@ -298,7 +304,7 @@ const std::map<std::string, std::string> math_consts {{"pi", pi_str}, {"e", e_st
 					continue;
 				}
 				if (level == 0) {
-					if (str_compare(rit->val.c_str(), "^")) { continue; }
+					if (str_compare(rit->val.c_str(), "^") || str_compare(rit->val.c_str(), "!")) { continue; }
 					curr_node = new Node(*rit);
 					curr_node->left = rcalcNode(rit+1, rit_end);
 					curr_node->right = rcalcNode(rit_begin, rit);
@@ -307,7 +313,8 @@ const std::map<std::string, std::string> math_consts {{"pi", pi_str}, {"e", e_st
 			}
 		}
 
-		for (auto rit = rit_begin; rit<rit_end; ++rit) {// ^ needs to be processed separately, because it should affect only the closest tokens
+		level = 0;
+		for (auto rit = rit_begin; rit<rit_end; ++rit) {// ^ and ! need to be processed separately, because they should affect only the closest token(s)
 			if (rit->symb == OP) {
 				if (str_compare(rit->val.c_str(), ")")) {
 					++level;
@@ -322,6 +329,11 @@ const std::map<std::string, std::string> math_consts {{"pi", pi_str}, {"e", e_st
 						curr_node = new Node(*rit);
 						curr_node->left = rcalcNode(rit+1, rit_end);
 						curr_node->right = rcalcNode(rit_begin, rit);
+						return curr_node;
+					}
+					if (str_compare(rit->val.c_str(), "!")) {
+						curr_node = new Node(*rit);
+						curr_node->left = rcalcNode(rit+1, rit_end);
 						return curr_node;
 					}
 				}
@@ -342,9 +354,12 @@ const std::map<std::string, std::string> math_consts {{"pi", pi_str}, {"e", e_st
 		//	//std::cout << token.val << " " << token.symb << std::endl;
 		//}
 		//std::cout<<std::endl;
-		buildTokenTree();
-		set_func();
-		//tree.print();
+		if (buildTokenTree()) {
+			set_func();
+		}else {
+			expression.expr = []() {return std::nanf(""); };
+		}
+		
 	}
 
 	void Parser::set_args(const float x) {

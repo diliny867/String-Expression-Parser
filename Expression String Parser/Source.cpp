@@ -6,7 +6,7 @@
 
 int main() {
 	ExprStrParser::Parser parser;
-	std::string expr = "-0.17*(25.215x*(-2+20)/(9-1))-log(25)^6";
+	std::string expr = "-0.17*(25.215x*(-2+20)/(9-1))-log(25)^6+4!";
 
 	//std::map<std::string, float> args{{"x", 2.0f} };
 
