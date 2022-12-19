@@ -74,6 +74,11 @@ const std::map<std::string, std::string> math_consts {{"pi", pi_str}, {"e", e_st
 		break;
 		case COP:
 		{
+			if (str_compare(curr_token.val.c_str(), "mod")) {
+				const auto left_val = calc_nodes(node->right->left);
+				const auto right_val = calc_nodes(node->right->right);
+				return [=]() {return std::fmod(left_val(), right_val()); };
+			}
 			const auto right = calc_nodes(node->right);
 			if (str_compare(curr_token.val.c_str(), "log")) {
 				return [=]() {return std::log(right()); };
@@ -359,6 +364,7 @@ const std::map<std::string, std::string> math_consts {{"pi", pi_str}, {"e", e_st
 		}else {
 			expression.expr = []() {return std::nanf(""); };
 		}
+		tree.print();
 		
 	}
 
