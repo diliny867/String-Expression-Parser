@@ -74,11 +74,6 @@ const std::map<std::string, std::string> math_consts {{"pi", pi_str}, {"e", e_st
 		break;
 		case COP:
 		{
-			if (str_compare(curr_token.val.c_str(), "mod")) {
-				const auto left_val = calc_nodes(node->right->left);
-				const auto right_val = calc_nodes(node->right->right);
-				return [=]() {return std::fmod(left_val(), right_val()); };
-			}
 			const auto right = calc_nodes(node->right);
 			if (str_compare(curr_token.val.c_str(), "log")) {
 				return [=]() {return std::log(right()); };
@@ -106,6 +101,10 @@ const std::map<std::string, std::string> math_consts {{"pi", pi_str}, {"e", e_st
 			}
 			if (str_compare(curr_token.val.c_str(), "abs")) {
 				return [=]() {return abs(right()); };
+			}
+			if (str_compare(curr_token.val.c_str(), "mod")) {
+				const auto left = calc_nodes(node->left);
+				return [=]() {return std::fmod(left(), right()); };
 			}
 		}
 		break;
@@ -270,6 +269,10 @@ const std::map<std::string, std::string> math_consts {{"pi", pi_str}, {"e", e_st
 				if (level == 0) {
 					curr_node = new Node(*(rit_end-1));
 					curr_node->right = rcalcNode(rit_begin, rit_end-1);
+					if(curr_node->right->value.val == ",") {
+						curr_node->left = curr_node->right->left;
+						curr_node->right = curr_node->right->right;
+					}
 					return curr_node;
 				}
 			}
@@ -364,8 +367,7 @@ const std::map<std::string, std::string> math_consts {{"pi", pi_str}, {"e", e_st
 		}else {
 			expression.expr = []() {return std::nanf(""); };
 		}
-		tree.print();
-		
+		//tree.print();
 	}
 
 	void Parser::set_args(const float x) {

@@ -71,7 +71,7 @@ namespace ExprStrParser {
 
 	class Parser {
 	private:
-		static inline std::set<std::string> cop_set{ "log", "sin", "cos", "tan", "sqrt", "ceil", "floor", "round", "abs" , "mod"}; //TODO: implement operators with ',' better
+		static inline std::set<std::string> cop_set{ "log", "sin", "cos", "tan", "sqrt", "ceil", "floor", "round", "abs" , "mod"};
 		Tree tree;
 		Expression expression{};
 		Node* rcalcNode(const std::vector<token>::reverse_iterator& rit_begin, const std::vector<token>::reverse_iterator& rit_end);
