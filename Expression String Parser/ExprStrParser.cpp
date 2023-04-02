@@ -379,7 +379,7 @@ namespace ExprStrParser {
 		//for (auto it = expression.func_args.begin(); it!=expression.func_args.end();++it) {
 		//	std::cout<<it->first<<" ";
 		//}
-		tree.print();
+		//tree.print();
 	}
 
 	std::map<std::string, float> Parser::get_args() {
