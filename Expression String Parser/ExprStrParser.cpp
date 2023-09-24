@@ -2,7 +2,6 @@
 
 namespace ExprStrParser { //TODO: Fix comma
 
-//#define str_compare(s1, s2) (std::strcmp(s1, s2) == 0)
 #define str_compare(s1, s2) (s1.compare(s2) == 0)
 
 	void Node::print(const std::string& prefix, const bool isLeft) const {
@@ -66,7 +65,6 @@ namespace ExprStrParser { //TODO: Fix comma
 			return [=]() {return pow(left(), right()); };
 		case Token::ExclamationMark:
 			return [=]() {return std::tgamma(left()+1.0f); };
-
 		case Token::Function:
 			if (str_compare(curr_token.val,"log")) {
 				return [=]() {return std::log(left()); };
@@ -118,106 +116,6 @@ namespace ExprStrParser { //TODO: Fix comma
 		}
 		return []() {return 0.0f; };
 	}
-
-	//void Parser::check_str_sstream(std::stringstream& str_ss) {
-	//	if (!str_ss.str().empty()) {
-	//		std::string str_;
-	//		str_ss>>str_;
-	//		if (!tokens.empty()) {
-	//			if (tokens.back().symb == NUM || tokens.back().symb == STR || str_compare(tokens.back().val.c_str(), ")")) {
-	//				tokens.push_back(token("*", OP));
-	//			}
-	//		}
-	//		if (cop_set.count(str_)) {
-	//			tokens.push_back(token(str_, COP));
-	//		} else if (math_consts.count(str_)) {
-	//			tokens.push_back(token(math_consts.at(str_), NUM));
-	//		} else {
-	//			//for (const auto& ch : str_) { //converts abc to a*b*c
-				//	tokens.push_back(token(std::string(1, ch), STR));
-				//	if (tokens.back().val == "x") {
-				//		expression.x = 0.0f;
-				//	} else {
-				//		expression.func_args[tokens.back().val] = 0.0f;
-				//	}
-				//	tokens.push_back(token("*", OP));
-				//}
-				//tokens.pop_back();
-	//
-	//			tokens.push_back(token(str_, STR));
-	//		}
-	//		str_ss = std::stringstream();
-	//	}
-	//}
-	//void Parser::check_num_sstream(std::stringstream& num_ss) {
-	//	if (!num_ss.str().empty()) {
-	//		tokens.push_back(token(num_ss.str(), NUM));
-	//		num_ss = std::stringstream();
-	//	}
-	//}
-	//
-	//void Parser::tokenize(std::string& str) {
-	//	tokens.reserve(str.size());
-	//	std::stringstream num_ss;
-	//	std::stringstream str_ss;
-	//
-	//	for (auto it = str.begin(); it != str.end(); ++it) {
-	//		if (*it==' ') { continue; }
-	//		if (isdigit(*it) || *it == '.') {
-	//			num_ss<<*it;
-	//			check_str_sstream(str_ss);
-	//		} else {
-	//			check_num_sstream(num_ss);
-	//			if (ispunct(*it)) {
-	//				check_str_sstream(str_ss);
-	//				if (*it == '-') {
-	//					if (tokens.empty() || str_compare(tokens.back().val.c_str(), "(")) {
-	//						tokens.push_back(token("0", NUM));
-	//					}
-	//				}
-	//				if (*it == '(') {
-	//					if (!tokens.empty()) {
-	//						if (tokens.back().symb == NUM || tokens.back().symb == STR || str_compare(tokens.back().val.c_str(), ")")) {
-	//							tokens.push_back(token("*", OP));
-	//						}
-	//					}
-	//				}
-	//				tokens.push_back(token(std::string(1, *it), OP));
-	//			} else {
-	//				str_ss<<*it;
-	//				if (math_consts.count(str_ss.str())) {
-	//					if (!tokens.empty()) {
-	//						if (tokens.back().symb == NUM || tokens.back().symb == STR || str_compare(tokens.back().val.c_str(), ")")) {
-	//							tokens.push_back(token("*", OP));
-	//						}
-	//					}
-	//					tokens.push_back(token(math_consts.at(str_ss.str()), NUM));
-	//					str_ss = std::stringstream();
-	//				}
-	//				//else {
-						//std::string str_ = str_ss.str();
-						//
-						//for (auto rit = str_.rbegin(); rit<str_.rend(); ++rit) {
-						//	
-						//	if (cop_set.count(std::string(rit.base(), str_.rbegin().base()))) {
-						//		//const token new_cop_token = token(std::string(rit.base(), str_.rbegin().base()), COP);
-						//		for(auto _it = str_.begin(); _it<rit.base(); ++_it) {
-						//			//std::cout<<*_it;
-						//			tokens.push_back(token(std::string(1, *_it), STR));
-						//			tokens.push_back(token("*", OP));
-						//		}
-						//		//tokens.push_back(new_cop_token);
-						//		str_ss = std::stringstream();
-						//		break;
-						//	}
-						//}
-					//}
-	//			}
-	//		}
-	//	}
-	//	check_num_sstream(num_ss);
-	//	check_str_sstream(str_ss);
-	//}
 
 	bool Parser::buildTokenTree() {
 		try {
@@ -375,7 +273,7 @@ namespace ExprStrParser { //TODO: Fix comma
 		}else {
 			expression.expr = []() {return std::nanf(""); };
 		}
-		tree.print();
+		//tree.print();
 	}
 
 	std::map<std::string, float> Parser::get_args() {
