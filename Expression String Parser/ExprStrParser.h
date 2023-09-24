@@ -12,41 +12,20 @@
 #include <cmath>
 //#include <chrono>
 
-namespace ExprStrParser {
+#include "ExprtStrTokenizer.h"
 
-	enum symbol {
-		NUL = 0,
-		NUM,//number
-		OP,//operator (+, -, *...)
-		COP,//complex operator (like log or sin)
-		STR//string (includes for example x and so on)
-	};
+namespace ExprStrParser { 
 
 	enum error_codes {
 		PARSE_ERROR,
 		SOLVE_ERROR
 	};
 
-	struct token {
-		token():val(), symb(NUL) {}
-		token(const std::string& _val, const symbol _symb):val(_val), symb(_symb) {}
-		std::string val;
-		symbol symb;
-		bool operator==(const token& a) const { return a.symb == symb && a.val == val; }
-		bool operator!=(const token& a) const { return !(a.symb == symb && a.val == val); }
-		friend std::ostream& operator<<(std::ostream& os, const token& tk);
-	};
-	inline std::ostream& operator<<(std::ostream& os, const token& tk) {
-		os << tk.val;
-		//os << tk.val <<": " << tk.symb;
-		return os;
-	}
-
 	class Node {
 	public:
 		Node() = default;
-		Node(const token& _val):value(_val) {}
-		token value;
+		Node(const Token& _val):value(_val) {}
+		Token value;
 		Node* left = nullptr;
 		Node* right = nullptr;
 		void print(const std::string& prefix, const bool isLeft) const;
@@ -71,17 +50,12 @@ namespace ExprStrParser {
 
 	class Parser {
 	private:
-		static inline std::set<std::string> cop_set{ "log", "sin", "cos", "tan", "sqrt", "ceil", "floor", "round", "abs" , "mod" };
+		Tokenizer tokenizer;
 		Tree tree;
 		Expression expression{};
-		Node* rcalcNode(const std::vector<token>::reverse_iterator& rit_begin, const std::vector<token>::reverse_iterator& rit_end);
+		Node* rcalcNode(const std::vector<Token>::reverse_iterator& rit_begin, const std::vector<Token>::reverse_iterator& rit_end);
 		bool buildTokenTree();
-		std::vector<token> tokens;
-		void check_str_sstream(std::stringstream& str_ss);
-		void check_num_sstream(std::stringstream& num_ss);
-		void tokenize(std::string& str);
 		void set_func();
-		//void optizmieTree();//maybe could later create this (to for example calculate multiple multiplications at one, first time) (or maybe add this method to expr tree?)
 	public:
 		Parser() = default;
 		void parse(std::string& str);
