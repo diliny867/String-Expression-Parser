@@ -10,11 +10,11 @@ namespace ExprStrParser { //TODO: Fix comma
 		//std::cout << this << std::endl;
 		std::cout << value << std::endl;
 
-		if (left!=nullptr) {
-			left->print(prefix + (isLeft ? "|   " : "    "), true);
-		}
-		if (right!=nullptr) {
-			right->print(prefix + (isLeft ? "|   " : "    "), false);
+		if (node_count>0) {
+			nodes[0]->print(prefix + (isLeft ? "|   " : "    "), true);
+			for(std::size_t i=1;i<node_count;i++) {
+				nodes[i]->print(prefix + (isLeft ? "|   " : "    "), false);
+			}
 		}
 	}
 
@@ -23,21 +23,24 @@ namespace ExprStrParser { //TODO: Fix comma
 	}
 
 
-	void Expression::calc_func(const Tree* tree) {
+	void Expression::calcFunc(const Tree* tree) {
 		try {
-			expr = calc_nodes(tree->head);
+			expr = calcNodes(tree->head);
 		} catch (error_codes err) {
 			expr = []() {return std::nanf(""); };
 		}
 	}
-
-	std::function<float()> Expression::calc_nodes(const Node* node) {
+	
+	std::function<float()> Expression::calcNodes(const Node* node) {
 		if (node == nullptr) { return nullptr; }
 		const Token curr_token = node->value;
 
-		const auto left = calc_nodes(node->left);
-		const auto right = calc_nodes(node->right);
+		const auto calculated_nodes = new std::function<float()>[node->node_count];
 
+		for(std::size_t i=0;i<node->node_count;i++) {
+			calculated_nodes[i] = calcNodes(node->nodes[i]);
+		}
+		
 		switch (curr_token.type) {
 		case Token::Number: 
 		{
@@ -47,70 +50,70 @@ namespace ExprStrParser { //TODO: Fix comma
 		case Token::Identifier:
 		{
 			if(curr_token.val == "x") {
-				return[=]() {return x; };
+				return[=]() {
+					return *x_var;
+				};
 			} else {
 				const std::string func_name = std::string(curr_token.val.data());
-				return [=]() {return func_args[func_name]; };
+				return [=]() {return (*other_vars)[func_name]; };
 			}
 		}
 		case Token::Plus:
-			return [=]() {return left()+right(); };
+			return [=]() {return calculated_nodes[0]()+calculated_nodes[1](); };
 		case Token::Minus:
-			return [=]() {return left()-right(); };
+			return [=]() {return calculated_nodes[0]()-calculated_nodes[1](); };
 		case Token::Star:
-			return [=]() {return left()*right(); };
+			return [=]() {return calculated_nodes[0]()*calculated_nodes[1](); };
 		case Token::Slash:
-			return [=]() {return left()/right(); };
+			return [=]() {return calculated_nodes[0]()/calculated_nodes[1](); };
 		case Token::Caret:
-			return [=]() {return pow(left(), right()); };
+			return [=]() {return pow(calculated_nodes[0](), calculated_nodes[1]()); };
 		case Token::ExclamationMark:
-			return [=]() {return std::tgamma(left()+1.0f); };
+			return [=]() {return std::tgamma(calculated_nodes[0]()+1.0f); };
 		case Token::Function:
 			if (str_compare(curr_token.val,"log")) {
-				return [=]() {return std::log(left()); };
+				return [=]() {return std::log(calculated_nodes[0]()); };
 			}
 			if (str_compare(curr_token.val, "sin")) {
-				return [=]() {return sin(left()); };
+				return [=]() {return sin(calculated_nodes[0]()); };
 			}
 			if (str_compare(curr_token.val, "cos")) {
-				return [=]() {return cos(left()); };
+				return [=]() {return cos(calculated_nodes[0]()); };
 			}
 			if (str_compare(curr_token.val, "tan")) {
-				return [=]() {return tan(left()); };
+				return [=]() {return tan(calculated_nodes[0]()); };
 			}
 			if (str_compare(curr_token.val, "arcsin")) {
-				return [=]() {return asin(left()); };
+				return [=]() {return asin(calculated_nodes[0]()); };
 			}
 			if (str_compare(curr_token.val, "arccos")) {
-				return [=]() {return acos(left()); };
+				return [=]() {return acos(calculated_nodes[0]()); };
 			}
 			if (str_compare(curr_token.val, "arctan")) {
-				return [=]() {return atan(left()); };
+				return [=]() {return atan(calculated_nodes[0]()); };
 			}
 			if (str_compare(curr_token.val, "sqrt")) {
-				return [=]() {return sqrt(left()); };
+				return [=]() {return sqrt(calculated_nodes[0]()); };
 			}
 			if (str_compare(curr_token.val, "ceil")) {
-				return [=]() {return ceil(left()); };
+				return [=]() {return ceil(calculated_nodes[0]()); };
 			}
 			if (str_compare(curr_token.val, "floor")) {
-				return [=]() {return floor(left()); };
+				return [=]() {return floor(calculated_nodes[0]()); };
 			}
 			if (str_compare(curr_token.val, "round")) {
-				return [=]() {return round(left()); };
+				return [=]() {return round(calculated_nodes[0]()); };
 			}
 			if (str_compare(curr_token.val, "abs")) {
-				return [=]() {return abs(left()); };
+				return [=]() {return abs(calculated_nodes[0]()); };
 			}
 			if (str_compare(curr_token.val, "mod")) {
-				return [=]() {return std::fmod(left(), right()); };
+				return [=]() {return std::fmod(calculated_nodes[0](), calculated_nodes[1]()); };
 			}
 			if (str_compare(curr_token.val, "logn")) {
-				return [=]() {return std::log(left())/std::log(right()); };
+				return [=]() {return std::log(calculated_nodes[0]())/std::log(calculated_nodes[1]()); };
 			}
 			break;
-		case Token::NUL:
-			return []() {return 0.0f; };
 		default:
 			return []() {return 0.0f; };
 		}
@@ -176,14 +179,18 @@ namespace ExprStrParser { //TODO: Fix comma
 					}
 					if (rit->type == Token::Comma && level == 0) {
 						curr_node = new Node(*(rit_end-1));
-						curr_node->left = rcalcNode(rit+1, rit_end-2);
-						curr_node->right = rcalcNode(rit_begin+1, rit);
+						curr_node->node_count = 2;
+						curr_node->nodes = new Node*[2];
+						curr_node->nodes[0] = rcalcNode(rit+1, rit_end-2);
+						curr_node->nodes[1] = rcalcNode(rit_begin+1, rit);
 						return curr_node;
 					}
 				}
 				if (level == 0) {
 					curr_node = new Node(*(rit_end-1));
-					curr_node->left = rcalcNode(rit_begin, rit_end-1);
+					curr_node->node_count = 1;
+					curr_node->nodes = new Node*[1];
+					curr_node->nodes[0] = rcalcNode(rit_begin, rit_end-1);
 					return curr_node;
 				}
 			}
@@ -202,8 +209,10 @@ namespace ExprStrParser { //TODO: Fix comma
 			case Token::Plus:
 				if (level == 0) {
 					curr_node = new Node(Token(*rit));
-					curr_node->left = rcalcNode(rit+1, rit_end);
-					curr_node->right = rcalcNode(rit_begin, rit);
+					curr_node->node_count = 2;
+					curr_node->nodes = new Node*[2];
+					curr_node->nodes[0] = rcalcNode(rit+1, rit_end);
+					curr_node->nodes[1] = rcalcNode(rit_begin, rit);
 					return curr_node;
 				}
 				break;
@@ -223,8 +232,10 @@ namespace ExprStrParser { //TODO: Fix comma
 			case Token::Slash:
 				if (level == 0) {
 					curr_node = new Node(*rit);
-					curr_node->left = rcalcNode(rit+1, rit_end);
-					curr_node->right = rcalcNode(rit_begin, rit);
+					curr_node->node_count = 2;
+					curr_node->nodes = new Node*[2];
+					curr_node->nodes[0] = rcalcNode(rit+1, rit_end);
+					curr_node->nodes[1] = rcalcNode(rit_begin, rit);
 					return curr_node;
 				}
 				break;
@@ -243,15 +254,19 @@ namespace ExprStrParser { //TODO: Fix comma
 			case Token::Caret:
 				if (level == 0) {
 					curr_node = new Node(*rit);
-					curr_node->left = rcalcNode(rit+1, rit_end);
-					curr_node->right = rcalcNode(rit_begin, rit);
+					curr_node->node_count = 2;
+					curr_node->nodes = new Node*[2];
+					curr_node->nodes[0] = rcalcNode(rit+1, rit_end);
+					curr_node->nodes[1] = rcalcNode(rit_begin, rit);
 					return curr_node;
 				}
 				break;
 			case Token::ExclamationMark:
 				if (level == 0) {
 					curr_node = new Node(*rit);
-					curr_node->left = rcalcNode(rit+1, rit_end);
+					curr_node->node_count = 1;
+					curr_node->nodes = new Node*[1];
+					curr_node->nodes[0] = rcalcNode(rit+1, rit_end);
 					return curr_node;
 				}
 				break;
@@ -261,64 +276,70 @@ namespace ExprStrParser { //TODO: Fix comma
 		return nullptr;
 	}
 
-	void Parser::set_func() {
-		expression.calc_func(&tree);
-	}
-
-	void Parser::parse(std::string& str) {
-		expression.func_args.clear();
+	void Parser::Parse(std::string& str) {
 		tokenizer.Tokenize(str);
 		if (buildTokenTree()) {
-			set_func();
+			curr_expression.calcFunc(&tree);
 		}else {
-			expression.expr = []() {return std::nanf(""); };
+			curr_expression.expr = []() {return std::nanf(""); };
 		}
 		//tree.print();
 	}
 
-	std::map<std::string, float> Parser::get_args() {
-		return expression.func_args;
+	Expression Parser::CopyExpression() {
+		return curr_expression;
 	}
 
-	void Parser::set_args(const float x) {
-		expression.x = x;
+	std::map<std::string, float> Expression::GetArgs() {
+		return *other_vars;
 	}
-	void Parser::set_args(const std::string& name, const float value) {
-		expression.func_args[name] = value;
+	void Expression::SetArgs(const float x) {
+		*x_var = x;
 	}
-	void Parser::set_args(const std::pair<std::string, float>& arg) {
-		expression.func_args[arg.first] = arg.second;
+	void Expression::SetArgs(const std::string& name, const float value) {
+		(*other_vars)[name] = value;
 	}
-	void Parser::set_args(const std::map<std::string, float>& args) {
-		expression.func_args = args;
+	void Expression::SetArgs(const std::map<std::string, float>& args) {
+		*other_vars = args;
 	}
-	void Parser::set_args(const float x, const std::map<std::string, float>& args) {
-		expression.x = x;
-		expression.func_args = args;
+	float Expression::Calculate() {
+		return expr();
 	}
-	float Parser::calculate() const {
-		return expression.expr();
+	float Expression::Calculate(const float x) {
+		*x_var = x;
+		return expr();
 	}
-	float Parser::calculate(const float x) {
-		expression.x = x;
-		return expression.expr();
+	float Expression::Calculate(const std::string& name, const float value) {
+		(*other_vars)[name] = value;
+		return expr();
 	}
-	float Parser::calculate(const std::string& name, const float value) {
-		expression.func_args[name] = value;
-		return expression.expr();
-	}
-	float Parser::calculate(const std::pair<std::string, float>& arg) {
-		expression.func_args[arg.first] = arg.second;
-		return expression.expr();
-	}
-	float Parser::calculate(const std::map<std::string, float>& args) {
-		expression.func_args = args;
-		return expression.expr();
-	}
-	float Parser::calculate(const float x, const std::map<std::string, float>& args) {
-		expression.x = x;
-		expression.func_args = args;
-		return expression.expr();
+	float Expression::Calculate(const std::map<std::string, float>& args) {
+		*other_vars = args;
+		return expr();
 	}
 
+	std::map<std::string, float> Parser::GetArgs() {
+		return curr_expression.GetArgs();
+	}
+	void Parser::SetArgs(const float x) {
+		curr_expression.SetArgs(x);
+	}
+	void Parser::SetArgs(const std::string& name, const float value) {
+		curr_expression.SetArgs(name, value);
+	}
+	void Parser::SetArgs(const std::map<std::string, float>& args) {
+		curr_expression.SetArgs(args);
+	}
+	float Parser::Calculate() {
+		return curr_expression.Calculate();
+	}
+	float Parser::Calculate(const float x) {
+		return curr_expression.Calculate(x);
+	}
+	float Parser::Calculate(const std::string& name, const float value) {
+		return curr_expression.Calculate(name,value);
+	}
+	float Parser::Calculate(const std::map<std::string, float>& args) {
+		return curr_expression.Calculate(args);
+	}
 }

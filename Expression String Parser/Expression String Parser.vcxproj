@@ -135,7 +135,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ExprStrParser.h" />
-    <ClInclude Include="ExprtStrTokenizer.h" />
+    <ClInclude Include="ExprStrTokenizer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

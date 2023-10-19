@@ -29,7 +29,7 @@
     <ClInclude Include="ExprStrParser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ExprtStrTokenizer.h">
+    <ClInclude Include="ExprStrTokenizer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

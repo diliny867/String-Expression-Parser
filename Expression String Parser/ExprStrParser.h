@@ -12,9 +12,9 @@
 #include <cmath>
 //#include <chrono>
 
-#include "ExprtStrTokenizer.h"
+#include "ExprStrTokenizer.h"
 
-namespace ExprStrParser { 
+namespace ExprStrParser {
 
 	enum error_codes {
 		PARSE_ERROR,
@@ -23,11 +23,11 @@ namespace ExprStrParser {
 
 	class Node {
 	public:
-		Node() = default;
+		Node():value(Token()) {};
 		Node(const Token& _val):value(_val) {}
 		Token value;
-		Node* left = nullptr;
-		Node* right = nullptr;
+		std::size_t node_count = 0;
+		Node** nodes;
 		void print(const std::string& prefix, const bool isLeft) const;
 	};
 	class Tree {
@@ -38,39 +38,45 @@ namespace ExprStrParser {
 	};
 
 	class Expression {
-	public:
-		Expression() = default;
+	private:
+		friend class Parser;
 		std::function<float()> expr;
-		std::map<std::string, float> func_args;
-		float x = 0.0f;//cache x, to call it and assign faster
-		std::function<float()> calc_nodes(const Node* node);
-		//float calc_nodes(const Node* node);
-		void calc_func(const Tree* tree);
+		float* x_var = new float(0.0f); //cache x separately (if not pointer something sometimes goes wrong)
+		std::map<std::string, float>* other_vars = new std::map<std::string, float>();
+		std::function<float()> calcNodes(const Node* node);
+		void calcFunc(const Tree* tree);
+	public:
+		std::map<std::string, float> GetArgs();
+		void SetArgs(const float x);
+		void SetArgs(const std::string& name, const float value);
+		void SetArgs(const std::map<std::string, float>& args);
+		float Calculate();
+		float Calculate(const float x);
+		float Calculate(const std::string& name, const float value);
+		float Calculate(const std::map<std::string, float>& args);
 	};
 
 	class Parser {
 	private:
 		Tokenizer tokenizer;
 		Tree tree;
-		Expression expression{};
+		Expression curr_expression;
 		Node* rcalcNode(const std::vector<Token>::reverse_iterator& rit_begin, const std::vector<Token>::reverse_iterator& rit_end);
 		bool buildTokenTree();
-		void set_func();
 	public:
 		Parser() = default;
-		void parse(std::string& str);
-		std::map<std::string, float> get_args();
-		void set_args(const float x);
-		void set_args(const std::string& name, const float value);
-		void set_args(const std::pair<std::string, float>& arg);
-		void set_args(const std::map<std::string, float>& args);
-		void set_args(const float x, const std::map<std::string, float>& args);
-		float calculate()const;
-		float calculate(const float x);
-		float calculate(const std::string& name, const float value);
-		float calculate(const std::pair<std::string, float>& arg);
-		float calculate(const std::map<std::string, float>& args);
-		float calculate(const float x, const std::map<std::string, float>& args);
+		void Parse(std::string& str);
+
+		Expression CopyExpression();
+
+		std::map<std::string, float> GetArgs();
+		void SetArgs(const float x);
+		void SetArgs(const std::string& name, const float value);
+		void SetArgs(const std::map<std::string, float>& args);
+		float Calculate();
+		float Calculate(const float x);
+		float Calculate(const std::string& name, const float value);
+		float Calculate(const std::map<std::string, float>& args);
 	};
 
 }
