@@ -136,7 +136,7 @@ namespace ExprStrParser { //TODO: Fix comma
 			throw std::exception("PARSE ERROR");	
 		}
 		if (rit_end-rit_begin == 1) { //leaf
-			if(rit_begin->type == Token::Number) {
+			if(rit_begin->type == Token::Number || rit_begin->type == Token::Identifier) {
 				return new Node(*rit_begin);
 			}
 			throw std::exception("PARSE ERROR");	
