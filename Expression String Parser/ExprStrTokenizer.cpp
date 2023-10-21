@@ -4,7 +4,7 @@
 #include <iostream>
 
 
-namespace ExprStrParser { //TODO: Fix comma
+namespace ExprStrParser {
 
 	void Tokenizer::Tokenize(const std::string& input) {
 		if(input.empty()) {

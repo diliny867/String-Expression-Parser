@@ -1,25 +1,13 @@
 #pragma once
 
-#include <iostream>
 #include <string>
 #include <vector>
-#include <algorithm>
-#include <sstream>
 #include <functional>
 #include <map>
-#include <set>
-#include <cstring>
-#include <cmath>
-//#include <chrono>
 
 #include "ExprStrTokenizer.h"
 
 namespace ExprStrParser {
-
-	enum error_codes {
-		PARSE_ERROR,
-		SOLVE_ERROR
-	};
 
 	class Node {
 	public:
@@ -30,38 +18,33 @@ namespace ExprStrParser {
 		Node** nodes;
 		void print(const std::string& prefix, const bool isLeft) const;
 	};
-	class Tree {
-	public:
-		Tree() { head = new Node(); }
-		void print() const;
-		Node* head;
-	};
 
 	class Expression {
 	private:
 		friend class Parser;
-		std::function<float()> expr;
-		float* x_var = new float(0.0f); //cache x separately (if not pointer something sometimes goes wrong)
-		std::map<std::string, float>* other_vars = new std::map<std::string, float>();
-		std::function<float()> calcNodes(const Node* node);
-		void calcFunc(const Tree* tree);
+		std::function<double()> expr;
+		double* x_var = new double(0.0f); //cache x separately (also if not pointer, something sometimes goes wrong)
+		std::map<std::string, double>* other_vars = new std::map<std::string, double>();
+		std::function<double()> calcNodes(const Node* node);
+		void calcFunc(const Node* tree);
 	public:
-		std::map<std::string, float> GetArgs();
-		void SetArgs(const float x);
-		void SetArgs(const std::string& name, const float value);
-		void SetArgs(const std::map<std::string, float>& args);
-		float Calculate();
-		float Calculate(const float x);
-		float Calculate(const std::string& name, const float value);
-		float Calculate(const std::map<std::string, float>& args);
+		std::function<double()>* GetInternalFunction();
+		std::map<std::string, double> GetArgs();
+		void SetArgs(const double x);
+		void SetArgs(const std::string& name, const double value);
+		void SetArgs(const std::map<std::string, double>& args);
+		double Calculate();
+		double Calculate(const double x);
+		double Calculate(const std::string& name, const double value);
+		double Calculate(const std::map<std::string, double>& args);
 	};
 
 	class Parser {
 	private:
 		Tokenizer tokenizer;
-		Tree tree;
+		Node* tree;
 		Expression curr_expression;
-		Node* rcalcNode(const std::vector<Token>::reverse_iterator& rit_begin, const std::vector<Token>::reverse_iterator& rit_end);
+		Node* rcalcNode(const std::vector<Token>::const_reverse_iterator& rit_begin, const std::vector<Token>::const_reverse_iterator& rit_end);
 		bool buildTokenTree();
 	public:
 		Parser() = default;
@@ -69,14 +52,14 @@ namespace ExprStrParser {
 
 		Expression CopyExpression();
 
-		std::map<std::string, float> GetArgs();
-		void SetArgs(const float x);
-		void SetArgs(const std::string& name, const float value);
-		void SetArgs(const std::map<std::string, float>& args);
-		float Calculate();
-		float Calculate(const float x);
-		float Calculate(const std::string& name, const float value);
-		float Calculate(const std::map<std::string, float>& args);
+		std::map<std::string, double> GetArgs();
+		void SetArgs(const double x);
+		void SetArgs(const std::string& name, const double value);
+		void SetArgs(const std::map<std::string, double>& args);
+		double Calculate();
+		double Calculate(const double x);
+		double Calculate(const std::string& name, const double value);
+		double Calculate(const std::map<std::string, double>& args);
 	};
 
 }
