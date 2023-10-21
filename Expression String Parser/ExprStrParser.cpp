@@ -136,7 +136,10 @@ namespace ExprStrParser { //TODO: Fix comma
 			throw std::exception("PARSE ERROR");	
 		}
 		if (rit_end-rit_begin == 1) { //leaf
-			return new Node(*rit_begin);
+			if(rit_begin->type == Token::Number) {
+				return new Node(*rit_begin);
+			}
+			throw std::exception("PARSE ERROR");	
 		}
 
 		{
@@ -274,7 +277,9 @@ namespace ExprStrParser { //TODO: Fix comma
 		}else {
 			curr_expression.expr = []() {return std::numeric_limits<double>::quiet_NaN(); };
 		}
-		//tree.print("",false);
+		//if(tree != nullptr){
+		//	tree->print("", false);
+		//}
 	}
 
 	Expression Parser::CopyExpression() {
