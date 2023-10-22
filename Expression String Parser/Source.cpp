@@ -7,8 +7,8 @@
 
 int main() {
 	ExprStrParser::Parser parser;
-	std::string expr = "-0.17*(25.215x*(-2+20)/(9-1))-log(25)^6+4!+mod(x,1.1)";
-	//std::string expr = "log(x)";
+	//std::string expr = "-0.17*(25.215x*(-2+20)/(9-1))-log(25)^6+4!+mod(x,1.1)";
+	std::string expr = "x-b-c";
 	//std::string expr = "cos(x)^2 + log(x/3) * round(4.5*(sin(x)))";
 
 	//std::map<std::string, double> args{{"x", 2.0f} };
