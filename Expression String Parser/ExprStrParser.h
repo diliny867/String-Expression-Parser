@@ -22,21 +22,25 @@ namespace ExprStrParser {
 	class Expression {
 	private:
 		friend class Parser;
+		Node* tree = nullptr;
 		std::function<double()> expr;
-		double* x_var = new double(0.0f); //cache x separately (also if not pointer, something sometimes goes wrong)
-		std::map<std::string, double>* other_vars = new std::map<std::string, double>();
+		double x_var = 0; //cache x separately
+		std::map<std::string, double> other_vars = std::map<std::string, double>();
 		std::function<double()> calcNodes(const Node* node);
-		void calcFunc(const Node* tree);
 	public:
+		Expression() = default;
+		Expression Copy();
+		void CalcFunc(Node* tree_);
 		std::function<double()>* GetInternalFunction();
+		double GetArg(const std::string& name);
 		std::map<std::string, double> GetArgs();
-		void SetArgs(const double x);
-		void SetArgs(const std::string& name, const double value);
-		void SetArgs(const std::map<std::string, double>& args);
-		double Calculate();
-		double Calculate(const double x);
-		double Calculate(const std::string& name, const double value);
-		double Calculate(const std::map<std::string, double>& args);
+		inline void SetArgs(const double x);
+		inline void SetArgs(const std::string& name, const double value);
+		inline void SetArgs(const std::map<std::string, double>& args);
+		inline double Calculate();
+		inline double Calculate(const double x);
+		inline double Calculate(const std::string& name, const double value);
+		inline double Calculate(const std::map<std::string, double>& args);
 	};
 
 	class Parser {

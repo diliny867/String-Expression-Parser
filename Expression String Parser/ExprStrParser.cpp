@@ -23,7 +23,8 @@ namespace ExprStrParser { //TODO: Fix comma
 		}
 	}
 
-	void Expression::calcFunc(const Node* tree) {
+	void Expression::CalcFunc(Node* tree_) {
+		tree = tree_;
 		expr = calcNodes(tree);
 	}
 
@@ -50,12 +51,10 @@ namespace ExprStrParser { //TODO: Fix comma
 		case Token::Identifier:
 		{
 			if(curr_token.val == "x") {
-				return[=]() {
-					return *x_var;
-				};
+				return[=]() {return x_var; };
 			} else {
 				const std::string func_name = std::string(curr_token.val);
-				return [=]() {return (*other_vars)[func_name]; };
+				return [=]() {return other_vars.at(func_name); };
 			}
 		}
 		case Token::Plus:
@@ -126,6 +125,7 @@ namespace ExprStrParser { //TODO: Fix comma
 			tokenizer.tokens.clear();
 			return true;
 		} catch (std::exception& e) {
+			tree = nullptr;
 			tokenizer.tokens.clear();
 			return false;
 		}
@@ -273,7 +273,8 @@ namespace ExprStrParser { //TODO: Fix comma
 	void Parser::Parse(std::string& str) {
 		tokenizer.Tokenize(str);
 		if (buildTokenTree()) {
-			curr_expression.calcFunc(tree);
+			curr_expression.tree = tree;
+			curr_expression.CalcFunc(tree);
 		}else {
 			curr_expression.expr = []() {return std::numeric_limits<double>::quiet_NaN(); };
 		}
@@ -283,34 +284,53 @@ namespace ExprStrParser { //TODO: Fix comma
 	}
 
 	Expression Parser::CopyExpression() {
-		return curr_expression;
+		return curr_expression.Copy();
 	}
 
+	Expression Expression::Copy() {
+		Expression expression;
+		expression.x_var = x_var;
+		expression.other_vars = other_vars;
+		expression.tree = tree;
+		if(tree == nullptr) {
+			expression.expr = []() {return std::numeric_limits<double>::quiet_NaN(); };
+		}else {
+			expression.CalcFunc(tree);
+		}
+		return expression;
+	}
+
+	double Expression::GetArg(const std::string& name) {
+		if(name == "x") {
+			return x_var;
+		}
+		return other_vars.at(name);
+	}
 	std::map<std::string, double> Expression::GetArgs() {
-		return *other_vars;
+		return other_vars;
 	}
 	void Expression::SetArgs(const double x) {
-		*x_var = x;
+		x_var = x;
 	}
 	void Expression::SetArgs(const std::string& name, const double value) {
-		(*other_vars)[name] = value;
+		other_vars.at(name) = value;
 	}
 	void Expression::SetArgs(const std::map<std::string, double>& args) {
-		*other_vars = args;
+		other_vars = args;
 	}
 	double Expression::Calculate() {
 		return expr();
 	}
 	double Expression::Calculate(const double x) {
-		*x_var = x;
+		x_var = x;
 		return expr();
 	}
 	double Expression::Calculate(const std::string& name, const double value) {
-		(*other_vars)[name] = value;
+		other_vars.at(name) = value;
 		return expr();
 	}
 	double Expression::Calculate(const std::map<std::string, double>& args) {
-		*other_vars = args;
+		other_vars = args;
 		return expr();
 	}
 
