@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include <functional>
-#include <map>
+#include <unordered_map>
 
 #include "ExprStrTokenizer.h"
 
@@ -24,8 +24,8 @@ namespace ExprStrParser {
 		friend class Parser;
 		Node* tree = nullptr;
 		std::function<double()> expr;
-		double x_var = 0; //cache x separately
-		std::map<std::string, double> other_vars = std::map<std::string, double>();
+		std::unordered_map<std::string, double> vars = std::unordered_map<std::string, double>();
+		double* x_var = &vars["x"]; //store ptr to x separately
 		std::function<double()> calcNodes(const Node* node);
 	public:
 		Expression() = default;
@@ -33,14 +33,14 @@ namespace ExprStrParser {
 		void CalcFunc(Node* tree_);
 		std::function<double()>* GetInternalFunction();
 		double GetArg(const std::string& name);
-		std::map<std::string, double> GetArgs();
+		std::unordered_map<std::string, double> GetArgs();
 		inline void SetArgs(const double x);
 		inline void SetArgs(const std::string& name, const double value);
-		inline void SetArgs(const std::map<std::string, double>& args);
+		inline void SetArgs(const std::unordered_map<std::string, double>& args);
 		inline double Calculate();
 		inline double Calculate(const double x);
 		inline double Calculate(const std::string& name, const double value);
-		inline double Calculate(const std::map<std::string, double>& args);
+		inline double Calculate(const std::unordered_map<std::string, double>& args);
 	};
 
 	class Parser {
@@ -56,14 +56,14 @@ namespace ExprStrParser {
 
 		Expression CopyExpression();
 
-		std::map<std::string, double> GetArgs();
+		std::unordered_map<std::string, double> GetArgs();
 		void SetArgs(const double x);
 		void SetArgs(const std::string& name, const double value);
-		void SetArgs(const std::map<std::string, double>& args);
+		void SetArgs(const std::unordered_map<std::string, double>& args);
 		double Calculate();
 		double Calculate(const double x);
 		double Calculate(const std::string& name, const double value);
-		double Calculate(const std::map<std::string, double>& args);
+		double Calculate(const std::unordered_map<std::string, double>& args);
 	};
 
 }

@@ -51,10 +51,11 @@ namespace ExprStrParser { //TODO: Fix comma
 		case Token::Identifier:
 		{
 			if(curr_token.val == "x") {
-				return[=]() {return x_var; };
+				return [=]() {return *x_var; };
 			} else {
 				const std::string func_name = std::string(curr_token.val);
-				return [=]() {return other_vars.at(func_name); };
+				vars.try_emplace(func_name, 0.0);
+				return [=]() {return vars.at(func_name); };
 			}
 		}
 		case Token::Plus:
@@ -290,7 +291,7 @@ namespace ExprStrParser { //TODO: Fix comma
 	Expression Expression::Copy() {
 		Expression expression;
 		expression.x_var = x_var;
-		expression.other_vars = other_vars;
+		expression.vars = vars;
 		expression.tree = tree;
 		if(tree == nullptr) {
 			expression.expr = []() {return std::numeric_limits<double>::quiet_NaN(); };
@@ -301,40 +302,37 @@ namespace ExprStrParser { //TODO: Fix comma
 	}
 
 	double Expression::GetArg(const std::string& name) {
-		if(name == "x") {
-			return x_var;
-		}
-		return other_vars.at(name);
+		return vars.at(name);
 	}
-	std::map<std::string, double> Expression::GetArgs() {
-		return other_vars;
+	std::unordered_map<std::string, double> Expression::GetArgs() {
+		return vars;
 	}
 	void Expression::SetArgs(const double x) {
-		x_var = x;
+		*x_var = x;
 	}
 	void Expression::SetArgs(const std::string& name, const double value) {
-		other_vars.at(name) = value;
+		vars.at(name) = value;
 	}
-	void Expression::SetArgs(const std::map<std::string, double>& args) {
-		other_vars = args;
+	void Expression::SetArgs(const std::unordered_map<std::string, double>& args) {
+		vars = args;
 	}
 	double Expression::Calculate() {
 		return expr();
 	}
 	double Expression::Calculate(const double x) {
-		x_var = x;
+		*x_var = x;
 		return expr();
 	}
 	double Expression::Calculate(const std::string& name, const double value) {
-		other_vars.at(name) = value;
+		vars.at(name) = value;
 		return expr();
 	}
-	double Expression::Calculate(const std::map<std::string, double>& args) {
-		other_vars = args;
+	double Expression::Calculate(const std::unordered_map<std::string, double>& args) {
+		vars = args;
 		return expr();
 	}
 
-	std::map<std::string, double> Parser::GetArgs() {
+	std::unordered_map<std::string, double> Parser::GetArgs() {
 		return curr_expression.GetArgs();
 	}
 	void Parser::SetArgs(const double x) {
@@ -343,7 +341,7 @@ namespace ExprStrParser { //TODO: Fix comma
 	void Parser::SetArgs(const std::string& name, const double value) {
 		curr_expression.SetArgs(name, value);
 	}
-	void Parser::SetArgs(const std::map<std::string, double>& args) {
+	void Parser::SetArgs(const std::unordered_map<std::string, double>& args) {
 		curr_expression.SetArgs(args);
 	}
 	double Parser::Calculate() {
@@ -355,7 +353,7 @@ namespace ExprStrParser { //TODO: Fix comma
 	double Parser::Calculate(const std::string& name, const double value) {
 		return curr_expression.Calculate(name,value);
 	}
-	double Parser::Calculate(const std::map<std::string, double>& args) {
+	double Parser::Calculate(const std::unordered_map<std::string, double>& args) {
 		return curr_expression.Calculate(args);
 	}
 }
